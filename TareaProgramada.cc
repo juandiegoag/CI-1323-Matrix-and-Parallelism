@@ -7,14 +7,13 @@ using namespace std;
 
 
 int main (int argc,  char *argv[] ){
-  int id, numproc, *rbuf, *aparicionesFila, *totalColumnas;
+  int id, numproc, *matriz, *rbuf, *aparicionesFila, *totalColumnas;
 
   MPI_Init( &argc , &argv );
   MPI_Comm_size( MPI_COMM_WORLD , &numproc );
   MPI_Comm_rank( MPI_COMM_WORLD , &id );
 
   int a = 0, filas = 0, columnas = 0, cantidad=0;
-  int * matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
 
   if( id == 0 ){
     //Desde el proceso 0 solicita los valores al usuario
@@ -26,6 +25,8 @@ int main (int argc,  char *argv[] ){
     filas = a * numproc;
     cantidad = a * columnas;//cantidad de elementos por proceso
     // Llenado de matriz desde proceso 0
+    matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
+
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
          *(matriz + i*columnas + j) = rand() % 5;
@@ -89,6 +90,10 @@ int main (int argc,  char *argv[] ){
   }
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
+
+  free(conteoFilas);
+  free(matriz);
+
   MPI_Barrier(MPI_COMM_WORLD);
 
   if (id == 0) {
