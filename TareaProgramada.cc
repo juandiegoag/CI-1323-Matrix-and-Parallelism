@@ -27,11 +27,16 @@ int main (int argc,  char *argv[] ){
     // Llenado de matriz desde proceso 0
     matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
     aparicionesFila = new int[5*filas]; //matriz final de apariciones en las filas
+    totalColumnas = new int[columnas];
 
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
          *(matriz + i*columnas + j) = rand() % 5;
       }
+    }
+
+    for (int i = 0; i < columnas; i++) {
+      totalColumnas[i]=0;
     }
 
   }
@@ -92,6 +97,7 @@ int main (int argc,  char *argv[] ){
   }
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Reduce(sumaColumnas, totalColumnas, columnas, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   //liberar memoria:
   //free(matriz);
@@ -102,6 +108,7 @@ int main (int argc,  char *argv[] ){
     int numFila=0;
     cout << "PROCESO 0:" <<endl;
     cout<<endl;
+
     for (int i = 0; i < 5*filas; i++) {
       int posicion=i%5;
       if(posicion==0){
@@ -109,6 +116,12 @@ int main (int argc,  char *argv[] ){
         cout<<"[FILA:"<<numFila<<"]: "<<endl;
       }
       cout<<"\t"<<"Numero de "<<posicion<<": "<<aparicionesFila[i]<<endl;
+    }
+    cout<<endl;
+
+    for (int i = 0; i < columnas; i++) {
+      cout<<"La suma de elementos de la columna "<<i<<" es:"<<endl;
+      cout<<"\t"<<totalColumnas[i]<<endl;
     }
 
   }
