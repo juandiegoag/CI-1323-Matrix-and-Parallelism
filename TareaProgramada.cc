@@ -13,34 +13,33 @@ int main (int argc,  char *argv[] ){
   MPI_Comm_size( MPI_COMM_WORLD , &numproc );
   MPI_Comm_rank( MPI_COMM_WORLD , &id );
 
-  int a = 0, filas = 0, columnas = 0;
+  int a = 0, filas = 0, columnas = 0, cantidad=0;
+  int * matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
 
   if( id == 0 ){
     //Desde el proceso 0 solicita los valores al usuario
-
     cout << "Ingrese el multiplo del numero de filas: " << endl;
     cin >> a;
-
     cout << "Ingrese el numero de columnas: " << endl;
     cin >> columnas;
 
     filas = a * numproc;
-
-    int * matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
-
+    cantidad = a * columnas;//cantidad de elementos por proceso
     // Llenado de matriz desde proceso 0
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
          *(matriz + i*columnas + j) = rand() % 5;
       }
     }
-    MPI_Bcast(&a,        1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&filas,    1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&columnas, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   }
+  MPI_Bcast(&a,        1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&filas,    1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&columnas, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cantidad, 1, MPI_INT, 0, MPI_COMM_WORLD);
   // Repartición de la matriz entre los procesos pertenecientes al MPI_COMM_WORLD
   // a cada proceso se le repartirá a filas de c enteros ==> a * C
-  int cantidad = a * columnas;
+
   MPI_Scatter(matriz, cantidad, MPI_INT, rbuf, cantidad, MPI_INT ,0 ,MPI_COMM_WORLD);
 
   int *conteoFilas  = (int*) malloc(5*a*sizeof(int)); //arreglo que contiene el numero de apariciones por procesos
@@ -90,15 +89,18 @@ int main (int argc,  char *argv[] ){
   }
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+
   if (id == 0) {
     int numFila=0;
 
     for (int i = 0; i < 5*filas; i++) {
-      if((int posicion=i%5)==0){
+      int posicion=i%5;
+      if(posicion==0){
         numFila++;
         cout<<"[FILA:"<<numFila<<"]: "<<endl;
       }
-      cout<<"\t"<<"Numero de "<<posicion<<": "<<conteoFilas[i]<<endl;
+      cout<<"\t"<<"Numero de "<<posicion<<": "<<aparicionesFila[i]<<endl;
     }
 
   }
