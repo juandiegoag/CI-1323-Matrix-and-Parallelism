@@ -26,6 +26,8 @@ int main (int argc,  char *argv[] ){
     cantidad = a * columnas;//cantidad de elementos por proceso
     // Llenado de matriz desde proceso 0
     matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
+    rbuf = new int[cantidad];
+    aparicionesFila = new int[5*filas];
 
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
@@ -90,11 +92,11 @@ int main (int argc,  char *argv[] ){
   }
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
-
+  MPI_Barrier(MPI_COMM_WORLD);
+  //liberar memoria:
   free(conteoFilas);
   free(matriz);
-
-  MPI_Barrier(MPI_COMM_WORLD);
+  delete rbuf;
 
   if (id == 0) {
     int numFila=0;
@@ -111,7 +113,7 @@ int main (int argc,  char *argv[] ){
   }
 
 
-
+  delete aparicionesFila;
   MPI_Finalize();
   return 0;
 
