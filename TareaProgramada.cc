@@ -7,7 +7,7 @@ using namespace std;
 
 
 int main (int argc,  char *argv[] ){
-  int id, numproc, *matriz, *rbuf, *aparicionesFila, *totalColumnas;
+  int id, numproc, *matriz, *rbuf, *aparicionesFila, *totalColumnas, *conteoFilas, *sumaColumnas;
 
   MPI_Init( &argc , &argv );
   MPI_Comm_size( MPI_COMM_WORLD , &numproc );
@@ -26,8 +26,7 @@ int main (int argc,  char *argv[] ){
     cantidad = a * columnas;//cantidad de elementos por proceso
     // Llenado de matriz desde proceso 0
     matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
-    rbuf = new int[cantidad];
-    aparicionesFila = new int[5*filas];
+    aparicionesFila = new int[5*filas]; //matriz final de apariciones en las filas
 
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
@@ -43,11 +42,12 @@ int main (int argc,  char *argv[] ){
   // Repartición de la matriz entre los procesos pertenecientes al MPI_COMM_WORLD
   // a cada proceso se le repartirá a filas de c enteros ==> a * C
 
+  rbuf = new int[cantidad];
   MPI_Scatter(matriz, cantidad, MPI_INT, rbuf, cantidad, MPI_INT ,0 ,MPI_COMM_WORLD);
 
-  int *conteoFilas  = (int*) malloc(5*a*sizeof(int)); //arreglo que contiene el numero de apariciones por procesos
+  conteoFilas  = new int[5*a]; //arreglo que contiene el numero de apariciones por procesos
   //a cada proceso le corresponde un arreglo
-  int *sumaColumnas = (int*) malloc(columnas*sizeof(int));//contiene la suma de todas las columnas, correspondientes proceso,
+  sumaColumnas = new int[columnas];//contiene la suma de todas las columnas, correspondientes proceso,
   //es de tamano del numero de elementos en una fila
   int offset = 0;//se usa para llevar la cuenta de las apariciones de un numero en una fila, cuando se termina de leer una fila,
   //y se pasa a la otra el offset se incrementa
@@ -94,13 +94,14 @@ int main (int argc,  char *argv[] ){
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   //liberar memoria:
-  free(conteoFilas);
-  free(matriz);
-  delete rbuf;
+  //free(matriz);
+  //delete conteoFilas;
+  //delete rbuf;
 
   if (id == 0) {
     int numFila=0;
-
+    cout << "PROCESO 0:" <<endl;
+    cout<<endl;
     for (int i = 0; i < 5*filas; i++) {
       int posicion=i%5;
       if(posicion==0){
@@ -113,7 +114,7 @@ int main (int argc,  char *argv[] ){
   }
 
 
-  delete aparicionesFila;
+  //delete aparicionesFila;
   MPI_Finalize();
   return 0;
 
