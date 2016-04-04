@@ -98,13 +98,13 @@ int main (int argc,  char *argv[] ){
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Reduce(sumaColumnas, totalColumnas, columnas, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  //liberar memoria:
-  //free(matriz);
-  //delete conteoFilas;
-  //delete rbuf;
+  MPI_Barrier(MPI_COMM_WORLD); //espera a que todos lleguen a este punto
+  delete conteoFilas;
+  delete rbuf;
+  delete sumaColumnas;
 
   if (id == 0) {
+    free(matriz);
     int numFila=0;
     cout << "PROCESO 0:" <<endl;
     cout<<endl;
@@ -113,41 +113,22 @@ int main (int argc,  char *argv[] ){
       int posicion=i%5;
       if(posicion==0){
         numFila++;
-        cout<<"[FILA:"<<numFila<<"]: "<<endl;
+        cout<<"[FILA "<<numFila<<"]: "<<endl;
       }
       cout<<"\t"<<"Numero de "<<posicion<<": "<<aparicionesFila[i]<<endl;
     }
-    cout<<endl;
 
+    cout<<endl;
+    
     for (int i = 0; i < columnas; i++) {
       cout<<"La suma de elementos de la columna "<<i<<" es:"<<endl;
       cout<<"\t"<<totalColumnas[i]<<endl;
     }
 
+    delete aparicionesFila;
+    delete totalColumnas;
   }
 
-
-  //delete aparicionesFila;
   MPI_Finalize();
   return 0;
-
 }
-
-/*
-    for( int i = 0; i < filas; i++ ){
-      for( int j = 0; j < columnas; j++ ){
-         cout << * ( matriz + i * columnas + j ) << " ";
-      }
-      cout << endl;
-    }
-
-    for( int j = 1; j <= 5*a; j++ ){
-       cout<< conteoFilas[j-1]<<" ";
-      if (j%5==0) {
-      cout<<endl;
-      }
-    }
-    for( int j = 1; j <= columnas; j++ ){
-       cout<< sumaColumnas[j-1]<<" ";
-    }
-  */
