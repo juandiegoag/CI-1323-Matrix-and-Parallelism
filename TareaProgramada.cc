@@ -18,18 +18,12 @@ int main (int argc,  char *argv[] ){
   MPI_Comm_size( MPI_COMM_WORLD , &numproc );
   MPI_Comm_rank( MPI_COMM_WORLD , &id );
 
-  int a = 0, filas = 0, columnas = 0, cantidad=0;
+  int a        = atoi(argv[1]);
+  int filas    = a * numproc;
+  int columnas = atoi(argv[2]);
+  int cantidad = a * columnas;
 
   if( id == 0 ){
-    //Desde el proceso 0 solicita los valores al usuario
-    cout << "Ingrese el multiplo del numero de filas: " << endl;
-    cin >> a;
-    cout << "Ingrese el numero de columnas: " << endl;
-    cin >> columnas;
-
-    filas    = a * numproc;
-    cantidad = a * columnas;//cantidad de elementos por proceso
-    // Llenado de matriz desde proceso 0
     matriz              = ( int * ) malloc ( filas * columnas * sizeof( int ) );
     aparicionesFila     = new int[5*filas]; //matriz final de apariciones en las filas
     totalColumnas       = new int[columnas];
@@ -44,14 +38,7 @@ int main (int argc,  char *argv[] ){
     }
 
     blanquear(totalColumnas,columnas);
-
   }
-
-  MPI_Bcast(&a,        1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&filas,    1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&columnas, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&cantidad, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   // Repartición de la matriz entre los procesos pertenecientes al MPI_COMM_WORLD
   // a cada proceso se le repartirá a filas de c enteros ==> a * C
   rbuf = new int[cantidad];
@@ -90,6 +77,8 @@ int main (int argc,  char *argv[] ){
   MPI_Reduce(conteoColumnas, aparicionesColumnas, 5*columnas, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   MPI_Barrier(MPI_COMM_WORLD); //espera a que todos lleguen a este punto
+
+  //liberar memoria
   delete conteoFilas;
   delete conteoColumnas;
   delete rbuf;
