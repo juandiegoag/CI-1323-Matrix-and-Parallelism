@@ -5,6 +5,11 @@
 
 using namespace std;
 
+void blanquear(int a[], int size){ //recibe un array, y lo llena con 0
+  for (int j = 0; j < size; j++) {
+    a[j]=0;
+	}
+}
 
 int main (int argc,  char *argv[] ){
   int id, numproc, *matriz, *rbuf, *aparicionesFila, *totalColumnas, *conteoFilas, *sumaColumnas;
@@ -22,12 +27,12 @@ int main (int argc,  char *argv[] ){
     cout << "Ingrese el numero de columnas: " << endl;
     cin >> columnas;
 
-    filas = a * numproc;
+    filas    = a * numproc;
     cantidad = a * columnas;//cantidad de elementos por proceso
     // Llenado de matriz desde proceso 0
-    matriz = ( int * ) malloc ( filas * columnas * sizeof( int ) );
+    matriz          = ( int * ) malloc ( filas * columnas * sizeof( int ) );
     aparicionesFila = new int[5*filas]; //matriz final de apariciones en las filas
-    totalColumnas = new int[columnas];
+    totalColumnas   = new int[columnas];
 
     for( int i = 0; i < filas; i++ ){
       for( int j = 0; j < columnas; j++ ){
@@ -35,18 +40,15 @@ int main (int argc,  char *argv[] ){
       }
     }
 
-    for (int i = 0; i < columnas; i++) {
-      totalColumnas[i]=0;
-    }
-
+    blanquear(totalColumnas,columnas);
   }
+
   MPI_Bcast(&a,        1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&filas,    1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&columnas, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cantidad, 1, MPI_INT, 0, MPI_COMM_WORLD);
   // Repartición de la matriz entre los procesos pertenecientes al MPI_COMM_WORLD
   // a cada proceso se le repartirá a filas de c enteros ==> a * C
-
   rbuf = new int[cantidad];
   MPI_Scatter(matriz, cantidad, MPI_INT, rbuf, cantidad, MPI_INT ,0 ,MPI_COMM_WORLD);
 
@@ -57,43 +59,15 @@ int main (int argc,  char *argv[] ){
   int offset = 0;//se usa para llevar la cuenta de las apariciones de un numero en una fila, cuando se termina de leer una fila,
   //y se pasa a la otra el offset se incrementa
 
-  for (int j = 0; j < 5*a; j++) {
-    conteoFilas[j]=0;//inicializa el array en 0
-  }
-
-  for (int j = 0; j < columnas; j++) {
-    sumaColumnas[j]=0;//inicializa el array en 0
-  }
+  blanquear(conteoFilas,5*a);
+  blanquear(sumaColumnas,columnas);
 
   for (int i = 0; i < cantidad; i++) {
     sumaColumnas[i%columnas]+=rbuf[i];//va sumando los valores de las columnas, en el vector sumaColumnas
-
     if (i%columnas == 0 && i>0) {
       offset+=5;//actualiza el offset si ya se leyo una fila totalmente
     }
-
-    switch (rbuf[i]) {//dependiendo del elemento que se lea se incrementa uno de los campos de conteoFilas
-      case 0:
-        *(conteoFilas+offset)+=1;
-      break;
-
-      case 1:
-        *(conteoFilas+offset+1)+=1;
-      break;
-
-      case 2:
-        *(conteoFilas+offset+2)+=1;
-      break;
-
-      case 3:
-        *(conteoFilas+offset+3)+=1;
-      break;
-
-      case 4:
-        *(conteoFilas+offset+4)+=1;
-      break;
-    }
-
+    *(conteoFilas+offset+rbuf[i])+=1; //conteo de apariciones en filas
   }
 
   MPI_Gather(conteoFilas, 5*a, MPI_INT, aparicionesFila, 5*a, MPI_INT, 0, MPI_COMM_WORLD);
@@ -119,7 +93,7 @@ int main (int argc,  char *argv[] ){
     }
 
     cout<<endl;
-    
+
     for (int i = 0; i < columnas; i++) {
       cout<<"La suma de elementos de la columna "<<i<<" es:"<<endl;
       cout<<"\t"<<totalColumnas[i]<<endl;
